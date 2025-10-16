@@ -5,23 +5,21 @@ import androidx.lifecycle.viewModelScope
 import com.example.assignment2.data.repository.CourseRepository
 import com.example.assignment2.model.Course
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class CourseViewModel(private val repository: CourseRepository) : ViewModel() {
 
-    // Courses loaded from database via repository
+    // Courses loaded from database via repository - using stateIn for cleaner approach
     val courses: StateFlow<List<Course>> = repository.allCourses
-        .run {
-            var state = MutableStateFlow<List<Course>>(emptyList())
-            viewModelScope.launch {
-                this@run.collect { courses ->
-                    state.value = courses
-                }
-            }
-            state.asStateFlow()
-        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Lazily,
+            emptyList()
+        )
 
     // Selected course
     private val _selectedCourse = MutableStateFlow<Course?>(null)

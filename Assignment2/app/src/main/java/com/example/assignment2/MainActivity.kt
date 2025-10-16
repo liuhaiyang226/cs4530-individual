@@ -14,7 +14,6 @@ import com.example.assignment2.viewmodel.CourseViewModel
 import com.example.assignment2.viewmodel.CourseViewModelFactory
 
 class MainActivity : ComponentActivity() {
-    // Create ViewModel instance using factory
     private val courseViewModel: CourseViewModel by viewModels {
         CourseViewModelFactory(application)
     }
@@ -27,7 +26,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Pass ViewModel to the main composable
                     CourseManagerApp(viewModel = courseViewModel)
                 }
             }
