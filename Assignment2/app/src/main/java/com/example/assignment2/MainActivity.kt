@@ -11,10 +11,13 @@ import androidx.compose.ui.Modifier
 import com.example.assignment2.ui.CourseManagerApp
 import com.example.assignment2.ui.theme.CourseManagerTheme
 import com.example.assignment2.viewmodel.CourseViewModel
+import com.example.assignment2.viewmodel.CourseViewModelFactory
 
 class MainActivity : ComponentActivity() {
-    // Create ViewModel instance
-    private val courseViewModel: CourseViewModel by viewModels()
+    // Create ViewModel instance using factory
+    private val courseViewModel: CourseViewModel by viewModels {
+        CourseViewModelFactory(application)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

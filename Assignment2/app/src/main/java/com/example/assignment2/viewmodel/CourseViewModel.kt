@@ -2,16 +2,26 @@ package com.example.assignment2.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.assignment2.data.repository.CourseRepository
 import com.example.assignment2.model.Course
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class CourseViewModel : ViewModel() {
-    // List of courses
-    private val _courses = MutableStateFlow<List<Course>>(emptyList())
-    val courses: StateFlow<List<Course>> = _courses.asStateFlow()
+class CourseViewModel(private val repository: CourseRepository) : ViewModel() {
+
+    // Courses loaded from database via repository
+    val courses: StateFlow<List<Course>> = repository.allCourses
+        .run {
+            var state = MutableStateFlow<List<Course>>(emptyList())
+            viewModelScope.launch {
+                this@run.collect { courses ->
+                    state.value = courses
+                }
+            }
+            state.asStateFlow()
+        }
 
     // Selected course
     private val _selectedCourse = MutableStateFlow<Course?>(null)
@@ -21,26 +31,17 @@ class CourseViewModel : ViewModel() {
     private val _editingCourse = MutableStateFlow<Course?>(null)
     val editingCourse: StateFlow<Course?> = _editingCourse.asStateFlow()
 
-    // Counter for generating unique IDs
-    private var nextId = 1
-
     // Add a new course
     fun addCourse(department: String, courseNumber: String, location: String) {
         viewModelScope.launch {
-            val newCourse = Course(
-                id = nextId++,
-                department = department.trim(),
-                courseNumber = courseNumber.trim(),
-                location = location.trim()
-            )
-            _courses.value = _courses.value + newCourse
+            repository.addCourse(department, courseNumber, location)
         }
     }
 
     // Delete a course
     fun deleteCourse(course: Course) {
         viewModelScope.launch {
-            _courses.value = _courses.value.filter { it.id != course.id }
+            repository.deleteCourse(course)
             // Clear selection if the deleted course was selected
             if (_selectedCourse.value?.id == course.id) {
                 _selectedCourse.value = null
@@ -66,22 +67,10 @@ class CourseViewModel : ViewModel() {
     // Update an existing course
     fun updateCourse(courseId: Int, department: String, courseNumber: String, location: String) {
         viewModelScope.launch {
-            _courses.value = _courses.value.map { course ->
-                if (course.id == courseId) {
-                    course.copy(
-                        department = department.trim(),
-                        courseNumber = courseNumber.trim(),
-                        location = location.trim()
-                    )
-                } else {
-                    course
-                }
-            }
+            repository.updateCourse(courseId, department, courseNumber, location)
             _editingCourse.value = null
             // Update selected course if it was edited
-            if (_selectedCourse.value?.id == courseId) {
-                _selectedCourse.value = _courses.value.find { it.id == courseId }
-            }
+            _selectedCourse.value = repository.getCourseById(courseId)
         }
     }
 }
